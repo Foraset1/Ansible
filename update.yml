@@ -2,7 +2,7 @@
 - hosts: all
   become: yes
   tasks:
-    - name: Update server
-      command: apt update
-    - name: Upgrade server
-      command: apt upgrade -y
+    - name: Update and upgrade apt packages
+      apt:
+        update_cache: yes
+        upgrade: dist
