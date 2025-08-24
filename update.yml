@@ -1,0 +1,6 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+    - name: Update & Upgrade
+      command: sudo apt update & sudo apt Upgrade
