@@ -1,0 +1,2 @@
+# Semaphore
+Playbooks Ansible Semaphore
