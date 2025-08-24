@@ -2,5 +2,7 @@
 - hosts: all
   become: yes
   tasks:
-    - name: Update & Upgrade
-      command: sudo apt update & sudo apt Upgrade
+    - name: Update server
+      command: apt update
+    - name: Upgrade server
+      command: apt upgrade -y
