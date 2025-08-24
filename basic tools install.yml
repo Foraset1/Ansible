@@ -1,0 +1,14 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+    - name: Install required packages
+      apt:
+        name:
+          - cron
+          - tmux
+          - nano
+          - redsocks
+          - iptables-persistent
+        state: present
+        update_cache: yes
