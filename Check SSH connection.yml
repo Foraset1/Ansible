@@ -1,0 +1,5 @@
+- hosts: all
+  gather_facts: no
+  tasks:
+    - name: Check SSH connection
+      ansible.builtin.ping:
