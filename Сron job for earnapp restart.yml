@@ -1,0 +1,13 @@
+---
+- name: Сron job for earnapp restart
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Add earnapp restart cron job
+      ansible.builtin.cron:
+        name: "Restart earnapp every 6 hours"
+        minute: "0"
+        hour: "*/6"
+        user: root
+        job: "/bin/bash -c 'earnapp stop && sleep 20 && earnapp start'"
