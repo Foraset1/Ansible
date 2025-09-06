@@ -6,7 +6,6 @@
       apt:
         name:
           - cron
-          - tmux
           - nano
           - redsocks
           - iptables-persistent
