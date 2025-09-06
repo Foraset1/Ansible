@@ -43,21 +43,57 @@
         mode: '0644'
 
     # Step 3 — Configure iptables
-    - name: Flush existing REDSOCKS chain if it exists
-      command: iptables -t nat -F REDSOCKS
+    - name: Delete REDSOCKS chain if it exists
+      command: iptables -t nat -X REDSOCKS
       ignore_errors: yes
 
     - name: Create REDSOCKS chain
       command: iptables -t nat -N REDSOCKS
-      ignore_errors: yes
+      args:
+        creates: /tmp/redsocks_chain_created
+      register: redsocks_chain_create
+      changed_when: redsocks_chain_create.rc == 0
+      failed_when: false
 
-    - name: Add iptables rules for REDSOCKS
-      shell: |
-        iptables -t nat -A REDSOCKS -d 0.0.0.0/8 -j RETURN
-        iptables -t nat -A REDSOCKS -d {{ proxy_ip }} -j RETURN
-        iptables -t nat -A REDSOCKS -p tcp -j REDIRECT --to-ports {{ redsocks_port }}
-        iptables -t nat -A OUTPUT -p tcp -j REDSOCKS
-        netfilter-persistent save
+    - name: Mark chain creation (local file flag)
+      file:
+        path: /tmp/redsocks_chain_created
+        state: touch
+      when: redsocks_chain_create.rc == 0
+
+    - name: Allow local traffic (0.0.0.0/8)
+      iptables:
+        table: nat
+        chain: REDSOCKS
+        destination: 0.0.0.0/8
+        jump: RETURN
+        protocol: all
+
+    - name: Allow proxy IP (do not redirect proxy itself)
+      iptables:
+        table: nat
+        chain: REDSOCKS
+        destination: "{{ proxy_ip }}"
+        jump: RETURN
+        protocol: all
+
+    - name: Redirect TCP traffic to redsocks port
+      iptables:
+        table: nat
+        chain: REDSOCKS
+        protocol: tcp
+        jump: REDIRECT
+        to_ports: "{{ redsocks_port }}"
+
+    - name: Redirect OUTPUT chain through REDSOCKS
+      iptables:
+        table: nat
+        chain: OUTPUT
+        protocol: tcp
+        jump: REDSOCKS
+
+    - name: Save iptables rules
+      command: netfilter-persistent save
 
     # Step 4 — Systemd unit for redsocks
     - name: Create systemd unit for redsocks
@@ -89,7 +125,7 @@
       reboot:
 
     - name: Get external IP using ifconfig.me
-      shell: curl ifconfig.me
+      shell: curl -s ifconfig.me
       register: public_ip
 
     - name: Show external IP
