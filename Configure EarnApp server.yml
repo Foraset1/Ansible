@@ -1,0 +1,116 @@
+---
+- name: Configure EarnApp server
+  hosts: all
+  become: true
+
+  tasks:
+
+    # Step 1 — Install required packages
+    - name: Install required packages
+      apt:
+        name:
+          - cron
+          - nano
+          - redsocks
+          - iptables-persistent
+        state: present
+        update_cache: yes
+
+    # Step 2 — Configure redsocks
+    - name: Create /etc/redsocks.conf
+      copy:
+        dest: /etc/redsocks.conf
+        content: |
+          base {
+              log_debug = off;
+              log_info = on;
+              log = "syslog:daemon";
+              daemon = on;
+              redirector = iptables;
+          }
+
+          redsocks {
+              local_ip = 0.0.0.0;
+              local_port = {{ redsocks_port }};
+              ip = {{ proxy_ip }};
+              port = {{ proxy_port }};
+              type = socks5;
+              login = "{{ proxy_user }}";
+              password = "{{ proxy_pass }}";
+          }
+        owner: root
+        group: root
+        mode: '0644'
+
+    # Step 3 — Configure iptables
+    - name: Flush existing REDSOCKS chain if it exists
+      command: iptables -t nat -F REDSOCKS
+      ignore_errors: yes
+
+    - name: Create REDSOCKS chain
+      command: iptables -t nat -N REDSOCKS
+      ignore_errors: yes
+
+    - name: Add iptables rules for REDSOCKS
+      shell: |
+        iptables -t nat -A REDSOCKS -d 0.0.0.0/8 -j RETURN
+        iptables -t nat -A REDSOCKS -d {{ proxy_ip }} -j RETURN
+        iptables -t nat -A REDSOCKS -p tcp -j REDIRECT --to-ports {{ redsocks_port }}
+        iptables -t nat -A OUTPUT -p tcp -j REDSOCKS
+        netfilter-persistent save
+
+    # Step 4 — Systemd unit for redsocks
+    - name: Create systemd unit for redsocks
+      copy:
+        dest: /etc/systemd/system/redsocks.service
+        content: |
+          [Unit]
+          Description=Redsocks proxy redirector
+          After=network.target
+
+          [Service]
+          Type=forking
+          ExecStart=/usr/sbin/redsocks -c /etc/redsocks.conf
+          Restart=always
+
+          [Install]
+          WantedBy=multi-user.target
+      notify: Reload systemd
+
+    - name: Enable and start redsocks service
+      systemd:
+        name: redsocks
+        enabled: true
+        state: started
+        daemon_reload: true
+
+    # Step 5 — Reboot and check external IP
+    - name: Reboot the server
+      reboot:
+
+    - name: Get external IP using ifconfig.me
+      shell: curl ifconfig.me
+      register: public_ip
+
+    - name: Show external IP
+      debug:
+        msg: "Current external IP: {{ public_ip.stdout }}"
+
+    # Step 6 — Install EarnApp
+    - name: Download EarnApp installation script
+      get_url:
+        url: https://brightdata.com/static/earnapp/install.sh
+        dest: /tmp/earnapp.sh
+        mode: '0755'
+
+    - name: Run EarnApp installation script
+      shell: bash /tmp/earnapp.sh
+      register: earnapp_result
+
+    - name: Show EarnApp installation result
+      debug:
+        var: earnapp_result.stdout_lines
+
+  handlers:
+    - name: Reload systemd
+      command: systemctl daemon-reload
