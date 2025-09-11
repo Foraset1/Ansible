@@ -1,0 +1,17 @@
+---
+# Reboot all servers at once and wait for them to come back
+
+- name: Reboot all servers at once
+  hosts: all
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Reboot the server
+      ansible.builtin.reboot:
+        reboot_timeout: 60
+        msg: "Reboot initiated by Ansible"
+      register: reboot_result
+
+    - name: Show when the server came back online
+      debug:
+        msg: "Host {{ inventory_hostname }} rebooted successfully and is back online."
