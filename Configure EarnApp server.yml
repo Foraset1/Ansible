@@ -9,17 +9,17 @@
   tasks:
 
     # Step 0 — Wait for apt locks to be released
-    - name: Wait for dpkg lock to be released
-      wait_for:
-        path: /var/lib/dpkg/lock-frontend
-        state: absent
-        timeout: 120
+    # - name: Wait for dpkg lock to be released
+    #   wait_for:
+    #     path: /var/lib/dpkg/lock-frontend
+    #     state: absent
+    #     timeout: 60
 
     - name: Wait for apt cache lock to be released
       wait_for:
         path: /var/lib/apt/lists/lock
         state: absent
-        timeout: 120
+        timeout: 60
 
     # Step 1 — Update apt cache
     - name: Update apt cache
