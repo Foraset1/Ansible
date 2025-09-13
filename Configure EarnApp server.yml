@@ -198,14 +198,14 @@
       tags:
         - earnapp
 
-      - name: Run EarnApp installation script with interactive confirmation
-        expect:
-          command: bash /tmp/earnapp.sh
-          responses:
-            "Do you agree to EarnApp's terms? *": yes
-        register: earnapp_result
-        tags:
-          - earnapp
+    - name: Run EarnApp installation script with interactive confirmation
+      expect:
+        command: bash /tmp/earnapp.sh
+        responses:
+          "Do you agree to EarnApp's terms? *": yes
+      register: earnapp_result
+      tags:
+        - earnapp
 
 
   
