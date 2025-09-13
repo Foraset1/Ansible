@@ -190,6 +190,15 @@
         - check_ip
 
     # Step 7 — Install EarnApp
+
+    - name: Install pexpect Python module
+      pip:
+        name: pexpect
+        state: present
+      become: yes
+      tags:
+        - earnapp
+    
     - name: Download EarnApp installation script
       get_url:
         url: https://brightdata.com/static/earnapp/install.sh
