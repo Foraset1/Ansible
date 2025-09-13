@@ -199,12 +199,12 @@
         - earnapp
 
     - name: Run EarnApp installation script with live output
-    shell: yes | bash /tmp/earnapp.sh
-    register: earnapp_result
-    async: 0
-    poll: 1
-    tags:
-      - earnapp
+      shell: yes | bash /tmp/earnapp.sh
+      register: earnapp_result
+      async: 0
+      poll: 1
+      tags:
+        - earnapp
   
     - name: Show EarnApp installation output
     debug:
