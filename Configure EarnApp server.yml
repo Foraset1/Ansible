@@ -190,40 +190,21 @@
         - check_ip
 
     # Step 7 — Install EarnApp
-
-    - name: Install pexpect Python module
-      pip:
-        name: pexpect
-        state: present
-      become: yes
+    - name: Run EarnApp installation script non-interactively
+      shell: yes | bash /tmp/earnapp.sh
+      register: earnapp_result
+      async: 0
+      poll: 1
       tags:
         - earnapp
     
-    - name: Download EarnApp installation script
-      get_url:
-        url: https://brightdata.com/static/earnapp/install.sh
-        dest: /tmp/earnapp.sh
-        mode: '0755'
-      tags:
-        - earnapp
-
-    - name: Run EarnApp installation script with interactive confirmation
-      expect:
-        command: bash /tmp/earnapp.sh
-        responses:
-          "Do you agree to EarnApp's terms? *": yes
-      register: earnapp_result
-      tags:
-        - earnapp
-
-
-  
     - name: Show EarnApp installation output
       debug:
         msg: "{{ item }}"
       loop: "{{ earnapp_result.stdout_lines }}"
       tags:
         - earnapp
+
 
 
   handlers:
