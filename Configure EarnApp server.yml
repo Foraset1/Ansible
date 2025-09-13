@@ -37,10 +37,11 @@
           - redsocks
           - iptables-persistent
         state: present
+        force_apt_get: yes
       environment:
         DEBIAN_FRONTEND: noninteractive
         APT_LISTCHANGES_FRONTEND: none
-      force_apt_get: yes
+      
 
     # Step 3 — Configure redsocks
     - name: Create /etc/redsocks.conf
