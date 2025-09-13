@@ -27,6 +27,8 @@
         update_cache: yes
       environment:
         DEBIAN_FRONTEND: noninteractive
+      tags:
+        - update_cache
 
     # Step 2 — Install required packages
     - name: Install required packages
@@ -37,11 +39,11 @@
           - redsocks
           - iptables-persistent
         state: present
-        #force_apt_get: yes
       environment:
         DEBIAN_FRONTEND: noninteractive
         APT_LISTCHANGES_FRONTEND: none
-      
+      tags:
+        - install_packages
 
     # Step 3 — Configure redsocks
     - name: Create /etc/redsocks.conf
@@ -68,11 +70,15 @@
         owner: root
         group: root
         mode: '0644'
+      tags:
+        - configure_redsocks
 
     # Step 4 — Configure iptables (idempotent)
     - name: Delete REDSOCKS chain if exists
       command: iptables -t nat -X {{ redsocks_chain_name }}
       ignore_errors: yes
+      tags:
+        - iptables
 
     - name: Create REDSOCKS chain
       command: iptables -t nat -N {{ redsocks_chain_name }}
@@ -81,12 +87,16 @@
       register: redsocks_chain_create
       changed_when: redsocks_chain_create.rc == 0
       failed_when: false
+      tags:
+        - iptables
 
     - name: Mark chain creation (local file flag)
       file:
         path: /tmp/redsocks_chain_created
         state: touch
       when: redsocks_chain_create.rc == 0
+      tags:
+        - iptables
 
     - name: Allow local traffic (0.0.0.0/8)
       iptables:
@@ -95,6 +105,8 @@
         destination: 0.0.0.0/8
         jump: RETURN
         protocol: all
+      tags:
+        - iptables
 
     - name: Allow proxy IP (do not redirect proxy itself)
       iptables:
@@ -103,6 +115,8 @@
         destination: "{{ proxy_ip }}"
         jump: RETURN
         protocol: all
+      tags:
+        - iptables
 
     - name: Redirect TCP traffic to redsocks port
       iptables:
@@ -111,6 +125,8 @@
         protocol: tcp
         jump: REDIRECT
         to_ports: "{{ redsocks_port }}"
+      tags:
+        - iptables
 
     - name: Redirect OUTPUT chain through REDSOCKS
       iptables:
@@ -118,9 +134,13 @@
         chain: OUTPUT
         protocol: tcp
         jump: "{{ redsocks_chain_name }}"
+      tags:
+        - iptables
 
     - name: Save iptables rules
       command: netfilter-persistent save
+      tags:
+        - iptables
 
     # Step 5 — Systemd unit for redsocks
     - name: Create systemd unit for redsocks
@@ -139,6 +159,8 @@
           [Install]
           WantedBy=multi-user.target
       notify: Reload systemd
+      tags:
+        - systemd
 
     - name: Enable and start redsocks service
       systemd:
@@ -146,18 +168,26 @@
         enabled: true
         state: started
         daemon_reload: true
+      tags:
+        - systemd
 
     # Step 6 — Reboot and check external IP
     - name: Reboot the server
       reboot:
+      tags:
+        - reboot
 
     - name: Get external IP using ifconfig.me
       shell: curl -s ifconfig.me
       register: public_ip
+      tags:
+        - check_ip
 
     - name: Show external IP
       debug:
         msg: "Current external IP: {{ public_ip.stdout }}"
+      tags:
+        - check_ip
 
     # Step 7 — Install EarnApp
     - name: Download EarnApp installation script
@@ -165,14 +195,20 @@
         url: https://brightdata.com/static/earnapp/install.sh
         dest: /tmp/earnapp.sh
         mode: '0755'
+      tags:
+        - earnapp
 
     - name: Run EarnApp installation script
       shell: bash /tmp/earnapp.sh
       register: earnapp_result
+      tags:
+        - earnapp
 
     - name: Show EarnApp installation result
       debug:
         var: earnapp_result.stdout_lines
+      tags:
+        - earnapp
 
   handlers:
     - name: Reload systemd
