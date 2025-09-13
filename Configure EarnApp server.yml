@@ -15,11 +15,11 @@
     #     state: absent
     #     timeout: 60
 
-    - name: Wait for apt cache lock to be released
-      wait_for:
-        path: /var/lib/apt/lists/lock
-        state: absent
-        timeout: 60
+    # - name: Wait for apt cache lock to be released
+    #   wait_for:
+    #     path: /var/lib/apt/lists/lock
+    #     state: absent
+    #     timeout: 60
 
     # Step 1 — Update apt cache
     - name: Update apt cache
