@@ -202,7 +202,7 @@
       expect:
       command: bash /tmp/earnapp.sh
       responses:
-        'Do you agree to EarnApp's terms? *': yes
+        'Do you agree to EarnApp''s terms? *': yes
       register: earnapp_result
       tags:
         - earnapp
