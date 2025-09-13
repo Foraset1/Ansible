@@ -198,18 +198,21 @@
       tags:
         - earnapp
 
-    - name: Run EarnApp installation script
-      shell: yes | bash /tmp/earnapp.sh
-      register: earnapp_result
-      tags:
-        - earnapp
+    - name: Run EarnApp installation script with live output
+    shell: yes | bash /tmp/earnapp.sh
+    register: earnapp_result
+    async: 0
+    poll: 1
+    tags:
+      - earnapp
+  
+    - name: Show EarnApp installation output
+    debug:
+      msg: "{{ item }}"
+    loop: "{{ earnapp_result.stdout_lines }}"
+    tags:
+      - earnapp
 
-
-    - name: Show EarnApp installation result
-      debug:
-        var: earnapp_result.stdout_lines
-      tags:
-        - earnapp
 
   handlers:
     - name: Reload systemd
