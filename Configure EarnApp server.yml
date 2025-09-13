@@ -198,13 +198,15 @@
       tags:
         - earnapp
 
-    - name: Run EarnApp installation script with live output
-      shell: yes | bash /tmp/earnapp.sh
+    - name: Run EarnApp installation script with interactive confirmation
+      expect:
+      command: bash /tmp/earnapp.sh
+      responses:
+        'Do you agree to EarnApp's terms? *': yes
       register: earnapp_result
-      async: 0
-      poll: 1
       tags:
         - earnapp
+
   
     - name: Show EarnApp installation output
       debug:
