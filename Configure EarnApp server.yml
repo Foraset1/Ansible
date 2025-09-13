@@ -207,11 +207,11 @@
         - earnapp
   
     - name: Show EarnApp installation output
-    debug:
-      msg: "{{ item }}"
-    loop: "{{ earnapp_result.stdout_lines }}"
-    tags:
-      - earnapp
+      debug:
+        msg: "{{ item }}"
+      loop: "{{ earnapp_result.stdout_lines }}"
+      tags:
+        - earnapp
 
 
   handlers:
