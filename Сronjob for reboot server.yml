@@ -10,7 +10,10 @@
     - name: Generate random minute (0-59)
       ansible.builtin.shell: echo $((RANDOM % 60))
       register: rand_min
-      changed_when: false
+
+    - name: Debug print random minute
+      ansible.builtin.debug:
+        msg: "Random minute for this host is {{ rand_min.stdout }}"
 
     - name: Add cron job for reboot with random offset
       ansible.builtin.cron:
