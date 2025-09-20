@@ -1,0 +1,27 @@
+---
+- name: Setup randomized reboot cronjob every 2 hours
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Clear existing crontab
+      ansible.builtin.cron:
+        name: "*"
+        state: absent
+
+    - name: Generate random minute (0-59)
+      ansible.builtin.command: sh -c 'echo $((RANDOM % 60))'
+      register: rand_min
+      changed_when: false
+
+    - name: Generate random hour within 2-hour blocks (0 or 1)
+      ansible.builtin.command: sh -c 'echo $((RANDOM % 2))'
+      register: rand_hour
+      changed_when: false
+
+    - name: Add cron job for reboot with random offset
+      ansible.builtin.cron:
+        name: "Reboot every 2 hours randomized"
+        minute: "{{ rand_min.stdout }}"
+        hour: "*/2"
+        job: "/sbin/reboot"
