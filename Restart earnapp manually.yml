@@ -1,0 +1,15 @@
+---
+- name: Restart earnapp manually
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Stop earnapp
+      ansible.builtin.command: earnapp stop
+
+    - name: Wait 20 seconds
+      ansible.builtin.pause:
+        seconds: 20
+
+    - name: Start earnapp
+      ansible.builtin.command: earnapp start
