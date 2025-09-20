@@ -7,8 +7,8 @@
     - name: Remove all existing crontab entries
       ansible.builtin.shell: crontab -r || true
 
-    - name: Generate random minute (0-59)
-      ansible.builtin.shell: echo $((RANDOM % 60))
+    - name: Generate random minute (0-59) using bash
+      ansible.builtin.shell: "bash -c 'echo $((RANDOM % 60))'"
       register: rand_min
 
     - name: Debug print random minute
