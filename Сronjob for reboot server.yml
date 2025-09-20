@@ -4,19 +4,14 @@
   become: true
 
   tasks:
-    - name: Clear existing crontab
-      ansible.builtin.cron:
-        name: "*"
-        state: absent
+    - name: Remove all existing crontab entries
+      ansible.builtin.shell: crontab -r || true
+      args:
+        warn: false
 
     - name: Generate random minute (0-59)
       ansible.builtin.command: sh -c 'echo $((RANDOM % 60))'
       register: rand_min
-      changed_when: false
-
-    - name: Generate random hour within 2-hour blocks (0 or 1)
-      ansible.builtin.command: sh -c 'echo $((RANDOM % 2))'
-      register: rand_hour
       changed_when: false
 
     - name: Add cron job for reboot with random offset
