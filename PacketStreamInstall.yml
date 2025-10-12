@@ -9,6 +9,48 @@
 
   tasks:
 
+    - name: Ensure apt cache is up to date
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Install required packages for Docker
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg
+          - lsb-release
+        state: present
+
+    - name: Add Docker GPG key
+      shell: |
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+      args:
+        creates: /usr/share/keyrings/docker-archive-keyring.gpg
+
+    - name: Add Docker APT repository
+      copy:
+        dest: /etc/apt/sources.list.d/docker.list
+        content: |
+          deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
+
+    - name: Update apt and install Docker Engine
+      apt:
+        update_cache: yes
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+        state: present
+
+    - name: Ensure Docker service is running
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
     - name: Stop and remove existing Watchtower container
       shell: |
         docker stop watchtower || true
@@ -36,3 +78,11 @@
         -v /var/run/docker.sock:/var/run/docker.sock \
         {{ docker_watchtower_image }} \
         --cleanup --include-stopped --include-restarting --revive-stopped --interval 60 psclient
+
+    - name: Show running Docker containers
+      shell: docker ps -a
+      register: docker_ps_output
+
+    - name: Display container list
+      debug:
+        var: docker_ps_output.stdout_lines
