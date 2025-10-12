@@ -1,0 +1,42 @@
+---
+- name: Deploy PacketStream and Watchtower containers
+  hosts: all
+  become: true
+
+  vars:
+    docker_ps_image: "packetstream/psclient:latest"
+    docker_watchtower_image: "containrrr/watchtower"
+
+  tasks:
+
+    - name: Stop and remove existing Watchtower container
+      shell: |
+        docker stop watchtower || true
+        docker rm watchtower || true
+        docker rmi {{ docker_watchtower_image }} || true
+      ignore_errors: yes
+
+    - name: Stop and remove existing PacketStream client container
+      shell: |
+        docker stop psclient || true
+        docker rm psclient || true
+        docker rmi {{ docker_ps_image }} || true
+      ignore_errors: yes
+
+    - name: Run PacketStream client container
+      shell: |
+        docker run -d --restart=always \
+        -e CID={{ CID }} \
+        --name psclient {{ docker_ps_image }}
+      args:
+        warn: false
+
+    - name: Run Watchtower container
+      shell: |
+        docker run -d --restart=always \
+        --name watchtower \
+        -v /var/run/docker.sock:/var/run/docker.sock \
+        {{ docker_watchtower_image }} \
+        --cleanup --include-stopped --include-restarting --revive-stopped --interval 60 psclient
+      args:
+        warn: false
