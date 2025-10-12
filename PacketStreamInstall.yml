@@ -28,8 +28,6 @@
         docker run -d --restart=always \
         -e CID={{ CID }} \
         --name psclient {{ docker_ps_image }}
-      args:
-        warn: false
 
     - name: Run Watchtower container
       shell: |
@@ -38,5 +36,3 @@
         -v /var/run/docker.sock:/var/run/docker.sock \
         {{ docker_watchtower_image }} \
         --cleanup --include-stopped --include-restarting --revive-stopped --interval 60 psclient
-      args:
-        warn: false
